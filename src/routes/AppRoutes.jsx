@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { ToastProvider } from "@/components/ui/toast"
-import Navbar from "@/components/Navbar"
+import Sidebar from "@/components/Sidebar"
+import DashboardLayout from "@/components/DashboardLayout"
 import Home from "../pages/Home"
 import Reservas from "../pages/Reservas"
 import Habitaciones from "../pages/Habitaciones"
@@ -10,15 +11,15 @@ function AppRoutes() {
   return (
     <BrowserRouter>
       <ToastProvider>
-        <div className="min-h-screen">
-          <Navbar />
+        <Sidebar />
+        <DashboardLayout>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/habitaciones" element={<Habitaciones />} />
             <Route path="/clientes" element={<Clientes />} />
             <Route path="/reservas" element={<Reservas />} />
           </Routes>
-        </div>
+        </DashboardLayout>
       </ToastProvider>
     </BrowserRouter>
   )

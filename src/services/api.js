@@ -49,3 +49,21 @@ export const clientesAPI = {
       method: "DELETE",
     }),
 }
+
+export const reservasAPI = {
+  getAll: () => fetchAPI("/reservas/"),
+  create: (data) =>
+    fetchAPI("/reservas/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  update: (id, data) =>
+    fetchAPI(`/reservas/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  delete: (id) =>
+    fetchAPI(`/reservas/${id}`, {
+      method: "DELETE",
+    }),
+}
