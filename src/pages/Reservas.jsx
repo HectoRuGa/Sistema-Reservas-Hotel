@@ -61,6 +61,9 @@ function Reservas() {
   const [formData, setFormData] = useState({ cliente_id: "", habitacion_id: "", fecha_entrada: "", fecha_salida: "" })
   const [formErrors, setFormErrors] = useState({})
 
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [confirmData, setConfirmData] = useState(null)
+
   const [consumoDialogOpen, setConsumoDialogOpen] = useState(false)
   const [consumoReserva, setConsumoReserva] = useState(null)
   const [consumoData, setConsumoData] = useState({ descripcion: "", monto: "" })
@@ -208,7 +211,7 @@ function Reservas() {
     }
   }
 
-  const handleCreateReserva = async (e) => {
+  const handleCreateReserva = (e) => {
     e.preventDefault()
     const errors = {}
     if (!formData.cliente_id) errors.cliente_id = "Selecciona un cliente"
@@ -216,6 +219,32 @@ function Reservas() {
     setFormErrors(errors)
     if (Object.keys(errors).length) return
 
+    const cliente = clientes.find((c) => c.id === parseInt(formData.cliente_id))
+    const habitacion = habitaciones.find((h) => h.id === parseInt(formData.habitacion_id))
+    if (!cliente || !habitacion) return
+
+    let noches = 0
+    if (formData.fecha_entrada && formData.fecha_salida) {
+      const d1 = new Date(formData.fecha_entrada)
+      const d2 = new Date(formData.fecha_salida)
+      noches = Math.max(0, Math.round((d2 - d1) / (1000 * 60 * 60 * 24)))
+    }
+
+    setConfirmData({
+      cliente_nombre: cliente.nombre,
+      habitacion_id: habitacion.id,
+      habitacion_tipo: `#${habitacion.id} - ${habitacion.tipo}`,
+      precio_noche: habitacion.precio || 0,
+      fecha_entrada: formData.fecha_entrada,
+      fecha_salida: formData.fecha_salida,
+      noches,
+      total_estimado: noches > 0 ? (habitacion.precio || 0) * noches : 0,
+    })
+    setCreateDialogOpen(false)
+    setConfirmDialogOpen(true)
+  }
+
+  const handleConfirmCreateReserva = async () => {
     try {
       const payload = {
         cliente_id: parseInt(formData.cliente_id),
@@ -225,10 +254,13 @@ function Reservas() {
       if (formData.fecha_salida) payload.fecha_salida = formData.fecha_salida
       await reservasAPI.create(payload)
       addToast("Reserva creada correctamente", "success")
-      setCreateDialogOpen(false)
+      setConfirmDialogOpen(false)
+      setConfirmData(null)
       loadAll()
     } catch (error) {
       addToast(error.message || "Error al crear reserva", "error")
+      setConfirmDialogOpen(false)
+      setConfirmData(null)
     }
   }
 
@@ -634,7 +666,7 @@ function Reservas() {
 
       {/* ============= CREATE RESERVA DIALOG ============= */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <div className="bg-background rounded-lg border shadow-lg w-full max-w-lg mx-4">
+        <div className="bg-white rounded-lg border shadow-lg w-full max-w-lg mx-4">
           <form onSubmit={handleCreateReserva}>
             <div className="p-6">
               <h2 className="text-lg font-semibold mb-4">Nueva Reserva</h2>
@@ -703,15 +735,72 @@ function Reservas() {
               <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit">Crear Reserva</Button>
+              <Button type="submit">Revisar Reserva</Button>
             </div>
           </form>
         </div>
       </Dialog>
 
+      {/* ============= CONFIRM RESERVA DIALOG ============= */}
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <div className="bg-white rounded-lg border shadow-lg w-full max-w-lg mx-4">
+          <div className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Confirmar Reserva</h2>
+            {confirmData && (
+              <div className="space-y-3">
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-gray-500">Cliente</span>
+                  <span className="font-medium">{confirmData.cliente_nombre}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-gray-500">Habitación</span>
+                  <span className="font-medium">{confirmData.habitacion_tipo}</span>
+                </div>
+                {confirmData.fecha_entrada && (
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-500">Entrada</span>
+                    <span className="font-medium">{confirmData.fecha_entrada}</span>
+                  </div>
+                )}
+                {confirmData.fecha_salida && (
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-500">Salida</span>
+                    <span className="font-medium">{confirmData.fecha_salida}</span>
+                  </div>
+                )}
+                {confirmData.noches > 0 && (
+                  <>
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="text-gray-500">Noches</span>
+                      <span className="font-medium">{confirmData.noches}</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="text-gray-500">Precio por noche</span>
+                      <span className="font-medium">${confirmData.precio_noche.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between py-2 text-lg font-bold">
+                      <span>Total estimado</span>
+                      <span>${confirmData.total_estimado.toFixed(2)}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 p-6 pt-0">
+            <Button variant="outline" onClick={() => { setConfirmDialogOpen(false); setCreateDialogOpen(true) }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmCreateReserva}>
+              Confirmar Reserva
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
       {/* ============= DELETE RESERVA DIALOG ============= */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <div className="bg-background rounded-lg border shadow-lg w-full max-w-md mx-4">
+        <div className="bg-white rounded-lg border shadow-lg w-full max-w-md mx-4">
           <div className="p-6">
             <h2 className="text-lg font-semibold mb-2">Confirmar Eliminación</h2>
             <p className="text-muted-foreground">
@@ -732,7 +821,7 @@ function Reservas() {
 
       {/* ============= ADD CONSUMO DIALOG ============= */}
       <Dialog open={consumoDialogOpen} onOpenChange={setConsumoDialogOpen}>
-        <div className="bg-background rounded-lg border shadow-lg w-full max-w-lg mx-4">
+        <div className="bg-white rounded-lg border shadow-lg w-full max-w-lg mx-4">
           <form onSubmit={handleAddConsumo}>
             <div className="p-6">
               <h2 className="text-lg font-semibold mb-4">
@@ -782,7 +871,7 @@ function Reservas() {
 
       {/* ============= CHECK-OUT DIALOG ============= */}
       <Dialog open={checkoutDialogOpen} onOpenChange={setCheckoutDialogOpen}>
-        <div className="bg-background rounded-lg border shadow-lg w-full max-w-lg mx-4">
+        <div className="bg-white rounded-lg border shadow-lg w-full max-w-lg mx-4">
           <div className="p-6">
             <h2 className="text-lg font-semibold mb-2">Confirmar Check-Out</h2>
             <p className="text-muted-foreground mb-4">

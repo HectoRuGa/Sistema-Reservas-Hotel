@@ -190,7 +190,7 @@ function Clientes() {
       </Table>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <div className="bg-background rounded-lg border shadow-lg w-full max-w-lg mx-4">
+        <div className="bg-white rounded-lg border shadow-lg w-full max-w-lg mx-4">
           <form onSubmit={handleSubmit}>
             <div className="p-6">
               <h2 className="text-lg font-semibold mb-4">
@@ -246,7 +246,7 @@ function Clientes() {
       </Dialog>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <div className="bg-background rounded-lg border shadow-lg w-full max-w-md mx-4">
+        <div className="bg-white rounded-lg border shadow-lg w-full max-w-md mx-4">
           <div className="p-6">
             <h2 className="text-lg font-semibold mb-2">Confirmar Eliminación</h2>
             <p className="text-muted-foreground">
