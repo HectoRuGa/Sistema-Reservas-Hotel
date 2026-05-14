@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectOption } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Dialog } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog"
+import { Field, FieldGroup } from "@/components/ui/field"
 import {
   Table,
   TableBody,
@@ -201,80 +202,81 @@ function Habitaciones() {
       </Table>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <div className="bg-white rounded-lg border shadow-lg w-full max-w-lg mx-4">
+        <DialogContent>
           <form onSubmit={handleSubmit}>
-            <div className="p-6">
-              <h2 className="text-lg font-semibold mb-4">
-                {editingHabitacion ? "Editar Habitación" : "Nueva Habitación"}
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="tipo">Tipo de Habitación</Label>
-                  <Input
-                    id="tipo"
-                    value={formData.tipo}
-                    onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
-                    placeholder="Ej: Simple, Doble, Suite"
-                    className={errors.tipo ? "border-red-500" : ""}
-                  />
-                  {errors.tipo && <p className="text-sm text-red-500 mt-1">{errors.tipo}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="estado">Estado</Label>
-                  <Select
-                    id="estado"
-                    value={formData.estado}
-                    onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
-                  >
-                    <option value="disponible">Disponible</option>
-                    <option value="ocupada">Ocupada</option>
-                    <option value="mantenimiento">Mantenimiento</option>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="precio">Precio</Label>
-                  <Input
-                    id="precio"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.precio}
-                    onChange={(e) => setFormData({ ...formData, precio: e.target.value })}
-                    placeholder="0.00"
-                    className={errors.precio ? "border-red-500" : ""}
-                  />
-                  {errors.precio && <p className="text-sm text-red-500 mt-1">{errors.precio}</p>}
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 p-6 pt-0">
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancelar
-              </Button>
+            <DialogHeader>
+              <DialogTitle>{editingHabitacion ? "Editar Habitación" : "Nueva Habitación"}</DialogTitle>
+              <DialogDescription>
+                {editingHabitacion
+                  ? "Modifica los datos de la habitación"
+                  : "Ingresa los datos para registrar una nueva habitación"}
+              </DialogDescription>
+            </DialogHeader>
+            <FieldGroup>
+              <Field>
+                <Label htmlFor="tipo">Tipo de Habitación</Label>
+                <Input
+                  id="tipo"
+                  value={formData.tipo}
+                  onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
+                  placeholder="Ej: Simple, Doble, Suite"
+                  className={errors.tipo ? "border-red-500" : ""}
+                />
+                {errors.tipo && <p className="text-sm text-red-500">{errors.tipo}</p>}
+              </Field>
+              <Field>
+                <Label htmlFor="estado">Estado</Label>
+                <Select
+                  id="estado"
+                  value={formData.estado}
+                  onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
+                >
+                  <option value="disponible">Disponible</option>
+                  <option value="ocupada">Ocupada</option>
+                  <option value="mantenimiento">Mantenimiento</option>
+                </Select>
+              </Field>
+              <Field>
+                <Label htmlFor="precio">Precio</Label>
+                <Input
+                  id="precio"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.precio}
+                  onChange={(e) => setFormData({ ...formData, precio: e.target.value })}
+                  placeholder="0.00"
+                  className={errors.precio ? "border-red-500" : ""}
+                />
+                {errors.precio && <p className="text-sm text-red-500">{errors.precio}</p>}
+              </Field>
+            </FieldGroup>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancelar</Button>
+              </DialogClose>
               <Button type="submit">{editingHabitacion ? "Actualizar" : "Crear"}</Button>
-            </div>
+            </DialogFooter>
           </form>
-        </div>
+        </DialogContent>
       </Dialog>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <div className="bg-white rounded-lg border shadow-lg w-full max-w-md mx-4">
-          <div className="p-6">
-            <h2 className="text-lg font-semibold mb-2">Confirmar Eliminación</h2>
-            <p className="text-muted-foreground">
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar Eliminación</DialogTitle>
+            <DialogDescription>
               ¿Estás seguro de que deseas eliminar la habitación{" "}
               <strong>{habitacionToDelete?.tipo}</strong>? Esta acción no se puede deshacer.
-            </p>
-          </div>
-          <div className="flex justify-end gap-2 p-6 pt-0">
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Eliminar
-            </Button>
-          </div>
-        </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button variant="destructive" onClick={handleDelete}>Eliminar</Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </div>
   )

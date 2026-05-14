@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectOption } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Dialog } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog"
+import { Field, FieldGroup } from "@/components/ui/field"
 import {
   Table,
   TableBody,
@@ -353,7 +354,6 @@ function Reservas() {
       {/* ============= TAB: CHECK-IN ============= */}
       {tab === "checkin" && (
         <div className="space-y-6">
-          {/* Pending check-ins */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -393,7 +393,6 @@ function Reservas() {
             </CardContent>
           </Card>
 
-          {/* Active guests */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -493,7 +492,6 @@ function Reservas() {
       {/* ============= TAB: RESERVAS ============= */}
       {tab === "reservas" && (
         <>
-          {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -513,7 +511,6 @@ function Reservas() {
             </Select>
           </div>
 
-          {/* Table */}
           <Table>
             <TableHeader>
               <TableRow>
@@ -666,250 +663,251 @@ function Reservas() {
 
       {/* ============= CREATE RESERVA DIALOG ============= */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <div className="bg-white rounded-lg border shadow-lg w-full max-w-lg mx-4">
+        <DialogContent>
           <form onSubmit={handleCreateReserva}>
-            <div className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Nueva Reserva</h2>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="cliente">Cliente</Label>
-                  <Select
-                    id="cliente"
-                    value={formData.cliente_id}
-                    onChange={(e) => setFormData({ ...formData, cliente_id: e.target.value })}
-                    className={formErrors.cliente_id ? "border-red-500" : ""}
-                  >
-                    <option value="">Seleccionar cliente...</option>
-                    {clientes.map((c) => (
-                      <SelectOption key={c.id} value={c.id}>
-                        {c.nombre}
-                      </SelectOption>
-                    ))}
-                  </Select>
-                  {formErrors.cliente_id && (
-                    <p className="text-sm text-red-500 mt-1">{formErrors.cliente_id}</p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="habitacion">Habitación</Label>
-                  <Select
-                    id="habitacion"
-                    value={formData.habitacion_id}
-                    onChange={(e) => setFormData({ ...formData, habitacion_id: e.target.value })}
-                    className={formErrors.habitacion_id ? "border-red-500" : ""}
-                  >
-                    <option value="">Seleccionar habitación...</option>
-                    {habitacionesDisponibles.map((h) => (
-                      <SelectOption key={h.id} value={h.id}>
-                        #{h.id} - {h.tipo} (${(h.precio || 0).toFixed(2)})
-                      </SelectOption>
-                    ))}
-                  </Select>
-                  {formErrors.habitacion_id && (
-                    <p className="text-sm text-red-500 mt-1">{formErrors.habitacion_id}</p>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="fecha_entrada">Fecha de Entrada</Label>
-                    <Input
-                      id="fecha_entrada"
-                      type="date"
-                      value={formData.fecha_entrada}
-                      onChange={(e) => setFormData({ ...formData, fecha_entrada: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="fecha_salida">Fecha de Salida</Label>
-                    <Input
-                      id="fecha_salida"
-                      type="date"
-                      value={formData.fecha_salida}
-                      onChange={(e) => setFormData({ ...formData, fecha_salida: e.target.value })}
-                    />
-                  </div>
-                </div>
+            <DialogHeader>
+              <DialogTitle>Nueva Reserva</DialogTitle>
+              <DialogDescription>
+                Selecciona el cliente, la habitación y las fechas para la reserva
+              </DialogDescription>
+            </DialogHeader>
+            <FieldGroup>
+              <Field>
+                <Label htmlFor="cliente">Cliente</Label>
+                <Select
+                  id="cliente"
+                  value={formData.cliente_id}
+                  onChange={(e) => setFormData({ ...formData, cliente_id: e.target.value })}
+                  className={formErrors.cliente_id ? "border-red-500" : ""}
+                >
+                  <option value="">Seleccionar cliente...</option>
+                  {clientes.map((c) => (
+                    <SelectOption key={c.id} value={c.id}>
+                      {c.nombre}
+                    </SelectOption>
+                  ))}
+                </Select>
+                {formErrors.cliente_id && (
+                  <p className="text-sm text-red-500">{formErrors.cliente_id}</p>
+                )}
+              </Field>
+              <Field>
+                <Label htmlFor="habitacion">Habitación</Label>
+                <Select
+                  id="habitacion"
+                  value={formData.habitacion_id}
+                  onChange={(e) => setFormData({ ...formData, habitacion_id: e.target.value })}
+                  className={formErrors.habitacion_id ? "border-red-500" : ""}
+                >
+                  <option value="">Seleccionar habitación...</option>
+                  {habitacionesDisponibles.map((h) => (
+                    <SelectOption key={h.id} value={h.id}>
+                      #{h.id} - {h.tipo} (${(h.precio || 0).toFixed(2)})
+                    </SelectOption>
+                  ))}
+                </Select>
+                {formErrors.habitacion_id && (
+                  <p className="text-sm text-red-500">{formErrors.habitacion_id}</p>
+                )}
+              </Field>
+              <div className="grid grid-cols-2 gap-4">
+                <Field>
+                  <Label htmlFor="fecha_entrada">Fecha de Entrada</Label>
+                  <Input
+                    id="fecha_entrada"
+                    type="date"
+                    value={formData.fecha_entrada}
+                    onChange={(e) => setFormData({ ...formData, fecha_entrada: e.target.value })}
+                  />
+                </Field>
+                <Field>
+                  <Label htmlFor="fecha_salida">Fecha de Salida</Label>
+                  <Input
+                    id="fecha_salida"
+                    type="date"
+                    value={formData.fecha_salida}
+                    onChange={(e) => setFormData({ ...formData, fecha_salida: e.target.value })}
+                  />
+                </Field>
               </div>
-            </div>
-            <div className="flex justify-end gap-2 p-6 pt-0">
-              <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>
-                Cancelar
-              </Button>
+            </FieldGroup>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancelar</Button>
+              </DialogClose>
               <Button type="submit">Revisar Reserva</Button>
-            </div>
+            </DialogFooter>
           </form>
-        </div>
+        </DialogContent>
       </Dialog>
 
       {/* ============= CONFIRM RESERVA DIALOG ============= */}
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <div className="bg-white rounded-lg border shadow-lg w-full max-w-lg mx-4">
-          <div className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Confirmar Reserva</h2>
-            {confirmData && (
-              <div className="space-y-3">
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-gray-500">Cliente</span>
-                  <span className="font-medium">{confirmData.cliente_nombre}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-gray-500">Habitación</span>
-                  <span className="font-medium">{confirmData.habitacion_tipo}</span>
-                </div>
-                {confirmData.fecha_entrada && (
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-500">Entrada</span>
-                    <span className="font-medium">{confirmData.fecha_entrada}</span>
-                  </div>
-                )}
-                {confirmData.fecha_salida && (
-                  <div className="flex justify-between py-2 border-b">
-                    <span className="text-gray-500">Salida</span>
-                    <span className="font-medium">{confirmData.fecha_salida}</span>
-                  </div>
-                )}
-                {confirmData.noches > 0 && (
-                  <>
-                    <div className="flex justify-between py-2 border-b">
-                      <span className="text-gray-500">Noches</span>
-                      <span className="font-medium">{confirmData.noches}</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b">
-                      <span className="text-gray-500">Precio por noche</span>
-                      <span className="font-medium">${confirmData.precio_noche.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between py-2 text-lg font-bold">
-                      <span>Total estimado</span>
-                      <span>${confirmData.total_estimado.toFixed(2)}</span>
-                    </div>
-                  </>
-                )}
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Reserva</DialogTitle>
+            <DialogDescription>
+              Revisa los datos antes de confirmar la reserva
+            </DialogDescription>
+          </DialogHeader>
+          {confirmData && (
+            <div className="px-6 pb-6 space-y-3">
+              <div className="flex justify-between py-2 border-b">
+                <span className="text-gray-500">Cliente</span>
+                <span className="font-medium">{confirmData.cliente_nombre}</span>
               </div>
-            )}
-          </div>
-          <div className="flex justify-end gap-2 p-6 pt-0">
-            <Button variant="outline" onClick={() => { setConfirmDialogOpen(false); setCreateDialogOpen(true) }}>
-              Cancelar
-            </Button>
-            <Button onClick={handleConfirmCreateReserva}>
-              Confirmar Reserva
-            </Button>
-          </div>
-        </div>
+              <div className="flex justify-between py-2 border-b">
+                <span className="text-gray-500">Habitación</span>
+                <span className="font-medium">{confirmData.habitacion_tipo}</span>
+              </div>
+              {confirmData.fecha_entrada && (
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-gray-500">Entrada</span>
+                  <span className="font-medium">{confirmData.fecha_entrada}</span>
+                </div>
+              )}
+              {confirmData.fecha_salida && (
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-gray-500">Salida</span>
+                  <span className="font-medium">{confirmData.fecha_salida}</span>
+                </div>
+              )}
+              {confirmData.noches > 0 && (
+                <>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-500">Noches</span>
+                    <span className="font-medium">{confirmData.noches}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-gray-500">Precio por noche</span>
+                    <span className="font-medium">${confirmData.precio_noche.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between py-2 text-lg font-bold">
+                    <span>Total estimado</span>
+                    <span>${confirmData.total_estimado.toFixed(2)}</span>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline" onClick={() => setCreateDialogOpen(true)}>Cancelar</Button>
+            </DialogClose>
+            <Button onClick={handleConfirmCreateReserva}>Confirmar Reserva</Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
 
       {/* ============= DELETE RESERVA DIALOG ============= */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <div className="bg-white rounded-lg border shadow-lg w-full max-w-md mx-4">
-          <div className="p-6">
-            <h2 className="text-lg font-semibold mb-2">Confirmar Eliminación</h2>
-            <p className="text-muted-foreground">
-              ¿Estás seguro de eliminar la reserva de{" "}
-              <strong>{reservaToDelete?.cliente_nombre}</strong>?
-            </p>
-          </div>
-          <div className="flex justify-end gap-2 p-6 pt-0">
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteReserva}>
-              Eliminar
-            </Button>
-          </div>
-        </div>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar Eliminación</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de eliminar la reserva de <strong>{reservaToDelete?.cliente_nombre}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button variant="destructive" onClick={handleDeleteReserva}>Eliminar</Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
 
       {/* ============= ADD CONSUMO DIALOG ============= */}
       <Dialog open={consumoDialogOpen} onOpenChange={setConsumoDialogOpen}>
-        <div className="bg-white rounded-lg border shadow-lg w-full max-w-lg mx-4">
+        <DialogContent>
           <form onSubmit={handleAddConsumo}>
-            <div className="p-6">
-              <h2 className="text-lg font-semibold mb-4">
-                Agregar Consumo — {consumoReserva?.cliente_nombre}
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="descripcion">Descripción</Label>
-                  <Input
-                    id="descripcion"
-                    value={consumoData.descripcion}
-                    onChange={(e) => setConsumoData({ ...consumoData, descripcion: e.target.value })}
-                    placeholder="Ej: Minibar, Cena, Lavandería..."
-                    className={consumoErrors.descripcion ? "border-red-500" : ""}
-                  />
-                  {consumoErrors.descripcion && (
-                    <p className="text-sm text-red-500 mt-1">{consumoErrors.descripcion}</p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="monto">Monto ($)</Label>
-                  <Input
-                    id="monto"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={consumoData.monto}
-                    onChange={(e) => setConsumoData({ ...consumoData, monto: e.target.value })}
-                    placeholder="0.00"
-                    className={consumoErrors.monto ? "border-red-500" : ""}
-                  />
-                  {consumoErrors.monto && (
-                    <p className="text-sm text-red-500 mt-1">{consumoErrors.monto}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 p-6 pt-0">
-              <Button type="button" variant="outline" onClick={() => setConsumoDialogOpen(false)}>
-                Cancelar
-              </Button>
+            <DialogHeader>
+              <DialogTitle>Agregar Consumo</DialogTitle>
+              <DialogDescription>
+                {consumoReserva?.cliente_nombre} — {consumoReserva?.habitacion_tipo}
+              </DialogDescription>
+            </DialogHeader>
+            <FieldGroup>
+              <Field>
+                <Label htmlFor="descripcion">Descripción</Label>
+                <Input
+                  id="descripcion"
+                  value={consumoData.descripcion}
+                  onChange={(e) => setConsumoData({ ...consumoData, descripcion: e.target.value })}
+                  placeholder="Ej: Minibar, Cena, Lavandería..."
+                  className={consumoErrors.descripcion ? "border-red-500" : ""}
+                />
+                {consumoErrors.descripcion && (
+                  <p className="text-sm text-red-500">{consumoErrors.descripcion}</p>
+                )}
+              </Field>
+              <Field>
+                <Label htmlFor="monto">Monto ($)</Label>
+                <Input
+                  id="monto"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={consumoData.monto}
+                  onChange={(e) => setConsumoData({ ...consumoData, monto: e.target.value })}
+                  placeholder="0.00"
+                  className={consumoErrors.monto ? "border-red-500" : ""}
+                />
+                {consumoErrors.monto && (
+                  <p className="text-sm text-red-500">{consumoErrors.monto}</p>
+                )}
+              </Field>
+            </FieldGroup>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancelar</Button>
+              </DialogClose>
               <Button type="submit">Agregar Consumo</Button>
-            </div>
+            </DialogFooter>
           </form>
-        </div>
+        </DialogContent>
       </Dialog>
 
       {/* ============= CHECK-OUT DIALOG ============= */}
       <Dialog open={checkoutDialogOpen} onOpenChange={setCheckoutDialogOpen}>
-        <div className="bg-white rounded-lg border shadow-lg w-full max-w-lg mx-4">
-          <div className="p-6">
-            <h2 className="text-lg font-semibold mb-2">Confirmar Check-Out</h2>
-            <p className="text-muted-foreground mb-4">
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Check-Out</DialogTitle>
+            <DialogDescription>
               {checkoutReserva?.cliente_nombre} — {checkoutReserva?.habitacion_tipo}
-            </p>
-            {checkoutConsumos.length > 0 && (
-              <div className="mb-4">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Consumos registrados</h3>
-                <div className="space-y-2">
-                  {checkoutConsumos.map((c) => (
-                    <div key={c.id} className="flex justify-between text-sm">
-                      <span>{c.descripcion}</span>
-                      <span className="font-medium">${c.monto.toFixed(2)}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="border-t mt-3 pt-3 flex justify-between font-semibold">
-                  <span>Total consumos</span>
-                  <span>${checkoutConsumos.reduce((s, c) => s + c.monto, 0).toFixed(2)}</span>
-                </div>
+            </DialogDescription>
+          </DialogHeader>
+          {checkoutConsumos.length > 0 && (
+            <div className="px-6 pb-6">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Consumos registrados</h3>
+              <div className="space-y-2">
+                {checkoutConsumos.map((c) => (
+                  <div key={c.id} className="flex justify-between text-sm">
+                    <span>{c.descripcion}</span>
+                    <span className="font-medium">${c.monto.toFixed(2)}</span>
+                  </div>
+                ))}
               </div>
-            )}
-            {checkoutConsumos.length === 0 && (
-              <p className="text-sm text-gray-400 mb-4">Sin consumos registrados</p>
-            )}
-            <p className="text-sm text-gray-500">
-              La habitación quedará disponible para nuevas reservas.
-            </p>
-          </div>
-          <div className="flex justify-end gap-2 p-6 pt-0">
-            <Button variant="outline" onClick={() => setCheckoutDialogOpen(false)}>
-              Cancelar
-            </Button>
+              <div className="border-t mt-3 pt-3 flex justify-between font-semibold">
+                <span>Total consumos</span>
+                <span>${checkoutConsumos.reduce((s, c) => s + c.monto, 0).toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+          {checkoutConsumos.length === 0 && (
+            <div className="px-6 pb-6">
+              <p className="text-sm text-gray-400">Sin consumos registrados</p>
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
             <Button onClick={handleCheckOut}>
               <LogOut className="mr-1.5 h-4 w-4" /> Confirmar Check-Out
             </Button>
-          </div>
-        </div>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </div>
   )

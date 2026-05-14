@@ -2,7 +2,8 @@ import { useState, useEffect } from "react"
 import { clientesAPI } from "@/services/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Dialog } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog"
+import { Field, FieldGroup } from "@/components/ui/field"
 import { Label } from "@/components/ui/label"
 import {
   Table,
@@ -190,79 +191,78 @@ function Clientes() {
       </Table>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <div className="bg-white rounded-lg border shadow-lg w-full max-w-lg mx-4">
+        <DialogContent>
           <form onSubmit={handleSubmit}>
-            <div className="p-6">
-              <h2 className="text-lg font-semibold mb-4">
-                {editingCliente ? "Editar Cliente" : "Nuevo Cliente"}
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="nombre">Nombre</Label>
-                  <Input
-                    id="nombre"
-                    value={formData.nombre}
-                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                    placeholder="Nombre completo"
-                    className={errors.nombre ? "border-red-500" : ""}
-                  />
-                  {errors.nombre && <p className="text-sm text-red-500 mt-1">{errors.nombre}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="correo">Correo</Label>
-                  <Input
-                    id="correo"
-                    type="email"
-                    value={formData.correo}
-                    onChange={(e) => setFormData({ ...formData, correo: e.target.value })}
-                    placeholder="correo@ejemplo.com"
-                    className={errors.correo ? "border-red-500" : ""}
-                  />
-                  {errors.correo && <p className="text-sm text-red-500 mt-1">{errors.correo}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="telefono">Teléfono</Label>
-                  <Input
-                    id="telefono"
-                    value={formData.telefono}
-                    onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                    placeholder="1234567890"
-                    className={errors.telefono ? "border-red-500" : ""}
-                  />
-                  {errors.telefono && (
-                    <p className="text-sm text-red-500 mt-1">{errors.telefono}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 p-6 pt-0">
-              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancelar
-              </Button>
+            <DialogHeader>
+              <DialogTitle>{editingCliente ? "Editar Cliente" : "Nuevo Cliente"}</DialogTitle>
+              <DialogDescription>
+                {editingCliente
+                  ? "Modifica los datos del cliente"
+                  : "Ingresa los datos para registrar un nuevo cliente"}
+              </DialogDescription>
+            </DialogHeader>
+            <FieldGroup>
+              <Field>
+                <Label htmlFor="nombre">Nombre</Label>
+                <Input
+                  id="nombre"
+                  value={formData.nombre}
+                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                  placeholder="Nombre completo"
+                  className={errors.nombre ? "border-red-500" : ""}
+                />
+                {errors.nombre && <p className="text-sm text-red-500">{errors.nombre}</p>}
+              </Field>
+              <Field>
+                <Label htmlFor="correo">Correo</Label>
+                <Input
+                  id="correo"
+                  type="email"
+                  value={formData.correo}
+                  onChange={(e) => setFormData({ ...formData, correo: e.target.value })}
+                  placeholder="correo@ejemplo.com"
+                  className={errors.correo ? "border-red-500" : ""}
+                />
+                {errors.correo && <p className="text-sm text-red-500">{errors.correo}</p>}
+              </Field>
+              <Field>
+                <Label htmlFor="telefono">Teléfono</Label>
+                <Input
+                  id="telefono"
+                  value={formData.telefono}
+                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                  placeholder="1234567890"
+                  className={errors.telefono ? "border-red-500" : ""}
+                />
+                {errors.telefono && <p className="text-sm text-red-500">{errors.telefono}</p>}
+              </Field>
+            </FieldGroup>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancelar</Button>
+              </DialogClose>
               <Button type="submit">{editingCliente ? "Actualizar" : "Crear"}</Button>
-            </div>
+            </DialogFooter>
           </form>
-        </div>
+        </DialogContent>
       </Dialog>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <div className="bg-white rounded-lg border shadow-lg w-full max-w-md mx-4">
-          <div className="p-6">
-            <h2 className="text-lg font-semibold mb-2">Confirmar Eliminación</h2>
-            <p className="text-muted-foreground">
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar Eliminación</DialogTitle>
+            <DialogDescription>
               ¿Estás seguro de que deseas eliminar al cliente{" "}
               <strong>{clienteToDelete?.nombre}</strong>? Esta acción no se puede deshacer.
-            </p>
-          </div>
-          <div className="flex justify-end gap-2 p-6 pt-0">
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Eliminar
-            </Button>
-          </div>
-        </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button variant="destructive" onClick={handleDelete}>Eliminar</Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </div>
   )
