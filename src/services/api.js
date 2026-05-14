@@ -76,8 +76,23 @@ export const reservasAPI = {
     fetchAPI(`/reservas/${id}/check-out`, {
       method: "POST",
     }),
+  inactivar: (id) =>
+    fetchAPI(`/reservas/${id}/inactivar`, {
+      method: "POST",
+    }),
+  factura: (id) => fetchAPI(`/reservas/${id}/factura`),
   buscarDisponibilidad: (fecha_entrada, fecha_salida) =>
     fetchAPI(`/reservas/disponibilidad?fecha_entrada=${fecha_entrada}&fecha_salida=${fecha_salida}`),
+}
+
+export const facturasAPI = {
+  getAll: () => fetchAPI("/facturas/"),
+  get: (id) => fetchAPI(`/facturas/${id}`),
+  update: (id, data) =>
+    fetchAPI(`/facturas/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
 }
 
 export const consumosAPI = {

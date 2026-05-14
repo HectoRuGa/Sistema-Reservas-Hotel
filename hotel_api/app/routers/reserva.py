@@ -6,6 +6,8 @@ from app.models.reserva import Reserva
 from app.models.consumo import Consumo
 from app.models.habitacion import Habitacion
 from app.models.cliente import Cliente
+from app.models.factura import Factura
+from app.schemas.factura import FacturaResponse
 from app.schemas.reserva import (
     ReservaCreate,
     ReservaResponse,
@@ -180,6 +182,25 @@ def registrar_check_in(id: int, db: Session = Depends(get_db)):
     db.refresh(reserva)
     return reserva
 
+def _generar_factura(reserva: Reserva, db: Session) -> Factura:
+    noches = 0
+    if reserva.fecha_entrada and reserva.fecha_salida:
+        noches = max(0, (reserva.fecha_salida - reserva.fecha_entrada).days)
+    precio = reserva.habitacion.precio if reserva.habitacion else 0
+    cargo_habitacion = precio * noches
+    consumos_total = sum(c.monto for c in reserva.consumos) if reserva.consumos else 0
+    total = cargo_habitacion + consumos_total
+
+    factura = Factura(
+        reserva_id=reserva.id,
+        cargo_habitacion=cargo_habitacion,
+        consumos_total=consumos_total,
+        total=total,
+        estado="pendiente",
+    )
+    db.add(factura)
+    return factura
+
 @router.post("/{id}/check-out", response_model=ReservaResponse)
 def registrar_check_out(id: int, db: Session = Depends(get_db)):
     reserva = db.query(Reserva).filter(Reserva.id == id).first()
@@ -192,8 +213,30 @@ def registrar_check_out(id: int, db: Session = Depends(get_db)):
     if habitacion:
         habitacion.estado = "disponible"
 
+    _generar_factura(reserva, db)
+
     reserva.estado = "finalizada"
     reserva.fecha_check_out = datetime.now(timezone.utc)
+
+    db.commit()
+    db.refresh(reserva)
+    return reserva
+
+@router.post("/{id}/inactivar", response_model=ReservaResponse)
+def marcar_inactivo(id: int, db: Session = Depends(get_db)):
+    reserva = db.query(Reserva).filter(Reserva.id == id).first()
+    if not reserva:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    if reserva.estado != "pendiente":
+        raise HTTPException(status_code=400, detail="Solo se pueden inactivar reservas pendientes")
+
+    habitacion = db.query(Habitacion).filter(Habitacion.id == reserva.habitacion_id).first()
+    if habitacion:
+        habitacion.estado = "disponible"
+
+    _generar_factura(reserva, db)
+
+    reserva.estado = "inactivo"
 
     db.commit()
     db.refresh(reserva)
@@ -232,3 +275,13 @@ def eliminar_consumo(id: int, consumo_id: int, db: Session = Depends(get_db)):
     db.delete(consumo)
     db.commit()
     return {"ok": True}
+
+@router.get("/{id}/factura", response_model=FacturaResponse)
+def obtener_factura_por_reserva(id: int, db: Session = Depends(get_db)):
+    reserva = db.query(Reserva).filter(Reserva.id == id).first()
+    if not reserva:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    factura = db.query(Factura).filter(Factura.reserva_id == id).first()
+    if not factura:
+        raise HTTPException(status_code=404, detail="Factura no encontrada")
+    return factura

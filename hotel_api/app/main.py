@@ -4,6 +4,7 @@ from app.database.connection import Base, engine
 from app.routers import cliente as cliente_router
 from app.routers import habitacion as habitacion_router
 from app.routers import reserva as reserva_router
+from app.routers import factura as factura_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -20,6 +21,7 @@ app.add_middleware(
 app.include_router(cliente_router.router)
 app.include_router(habitacion_router.router)
 app.include_router(reserva_router.router)
+app.include_router(factura_router.router)
 
 @app.get("/")
 def root():

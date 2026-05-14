@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { reservasAPI, consumosAPI, clientesAPI, habitacionesAPI } from "@/services/api"
+import { reservasAPI, consumosAPI, clientesAPI, habitacionesAPI, facturasAPI } from "@/services/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectOption } from "@/components/ui/select"
@@ -34,6 +34,7 @@ import {
   ClipboardCheck,
   Building2,
   SearchX,
+  FileText,
 } from "lucide-react"
 
 const estadoBadge = {
@@ -41,6 +42,7 @@ const estadoBadge = {
   activa: <Badge variant="success">Activa</Badge>,
   finalizada: <Badge variant="secondary">Finalizada</Badge>,
   cancelada: <Badge variant="destructive">Cancelada</Badge>,
+  inactivo: <Badge variant="secondary">Inactivo</Badge>,
 }
 
 function Reservas() {
@@ -73,6 +75,16 @@ function Reservas() {
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false)
   const [checkoutReserva, setCheckoutReserva] = useState(null)
   const [checkoutConsumos, setCheckoutConsumos] = useState([])
+  const [checkoutCargoHabitacion, setCheckoutCargoHabitacion] = useState(0)
+  const [checkoutNoches, setCheckoutNoches] = useState(0)
+
+  const [inactivarDialogOpen, setInactivarDialogOpen] = useState(false)
+  const [inactivarReserva, setInactivarReserva] = useState(null)
+
+  const [facturas, setFacturas] = useState([])
+  const [facturaDialogOpen, setFacturaDialogOpen] = useState(false)
+  const [facturaActual, setFacturaActual] = useState(null)
+  const [facturaConsumos, setFacturaConsumos] = useState([])
 
   const [dispFechas, setDispFechas] = useState({ entrada: "", salida: "" })
   const [disponibles, setDisponibles] = useState([])
@@ -86,14 +98,16 @@ function Reservas() {
   const loadAll = async () => {
     setLoading(true)
     try {
-      const [r, c, h] = await Promise.all([
+      const [r, c, h, f] = await Promise.all([
         reservasAPI.getAll(),
         clientesAPI.getAll(),
         habitacionesAPI.getAll(),
+        facturasAPI.getAll(),
       ])
       setReservas(r)
       setClientes(c)
       setHabitaciones(h)
+      setFacturas(f)
     } catch (error) {
       addToast("Error al cargar datos", "error")
     } finally {
@@ -109,6 +123,21 @@ function Reservas() {
       addToast("Error al cargar consumos", "error")
     }
   }
+
+  const loadFacturas = async () => {
+    try {
+      const data = await facturasAPI.getAll()
+      setFacturas(data)
+    } catch {
+      addToast("Error al cargar facturas", "error")
+    }
+  }
+
+  useEffect(() => {
+    if (tab === "facturacion") {
+      loadFacturas()
+    }
+  }, [tab])
 
   const filteredReservas = reservas.filter((r) => {
     const matchSearch = r.cliente_nombre?.toLowerCase().includes(search.toLowerCase())
@@ -131,6 +160,16 @@ function Reservas() {
 
   const openCheckout = async (reserva) => {
     setCheckoutReserva(reserva)
+    const habitacion = habitaciones.find((h) => h.id === reserva.habitacion_id)
+    let noches = 0
+    if (reserva.fecha_entrada && reserva.fecha_salida) {
+      const d1 = new Date(reserva.fecha_entrada)
+      const d2 = new Date(reserva.fecha_salida)
+      noches = Math.max(0, Math.round((d2 - d1) / (1000 * 60 * 60 * 24)))
+    }
+    const precioNoche = habitacion?.precio || 0
+    setCheckoutCargoHabitacion(noches * precioNoche)
+    setCheckoutNoches(noches)
     try {
       const data = await consumosAPI.list(reserva.id)
       setCheckoutConsumos(data)
@@ -145,7 +184,12 @@ function Reservas() {
       await reservasAPI.checkOut(checkoutReserva.id)
       addToast("Check-out registrado correctamente", "success")
       setCheckoutDialogOpen(false)
-      loadAll()
+      await loadAll()
+      const factura = await reservasAPI.factura(checkoutReserva.id)
+      const cs = await consumosAPI.list(checkoutReserva.id)
+      setFacturaActual(factura)
+      setFacturaConsumos(cs)
+      setFacturaDialogOpen(true)
     } catch (error) {
       addToast(error.message || "Error al registrar check-out", "error")
     }
@@ -177,6 +221,22 @@ function Reservas() {
       loadConsumos(consumoReserva.id)
     } catch (error) {
       addToast(error.message || "Error al agregar consumo", "error")
+    }
+  }
+
+  const handleInactivar = async () => {
+    try {
+      await reservasAPI.inactivar(inactivarReserva.id)
+      addToast("Reserva marcada como inactiva", "success")
+      setInactivarDialogOpen(false)
+      setInactivarReserva(null)
+      await loadAll()
+      const factura = await reservasAPI.factura(inactivarReserva.id)
+      setFacturaActual(factura)
+      setFacturaConsumos([])
+      setFacturaDialogOpen(true)
+    } catch (error) {
+      addToast(error.message || "Error al inactivar reserva", "error")
     }
   }
 
@@ -349,6 +409,17 @@ function Reservas() {
           <CalendarDays className="h-4 w-4" />
           Disponibilidad
         </button>
+        <button
+          onClick={() => setTab("facturacion")}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+            tab === "facturacion"
+              ? "border-gray-900 text-gray-900"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <FileText className="h-4 w-4" />
+          Facturación
+        </button>
       </div>
 
       {/* ============= TAB: CHECK-IN ============= */}
@@ -383,6 +454,9 @@ function Reservas() {
                           </p>
                         </div>
                       </div>
+                      <Button variant="outline" size="sm" className="text-gray-500" onClick={() => { setInactivarReserva(r); setInactivarDialogOpen(true) }}>
+                        Inactivar
+                      </Button>
                       <Button size="sm" onClick={() => handleCheckIn(r.id)}>
                         <LogIn className="mr-1.5 h-4 w-4" /> Check-In
                       </Button>
@@ -508,6 +582,7 @@ function Reservas() {
               <option value="activa">Activa</option>
               <option value="finalizada">Finalizada</option>
               <option value="cancelada">Cancelada</option>
+              <option value="inactivo">Inactivo</option>
             </Select>
           </div>
 
@@ -659,6 +734,76 @@ function Reservas() {
             </Card>
           )}
         </div>
+      )}
+
+      {/* ============= TAB: FACTURACIÓN ============= */}
+      {tab === "facturacion" && (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>#</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Habitación</TableHead>
+              <TableHead>Cargo Hab.</TableHead>
+              <TableHead>Consumos</TableHead>
+              <TableHead>Total</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead>Fecha</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {facturas.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                  No hay facturas registradas
+                </TableCell>
+              </TableRow>
+            ) : (
+              facturas.map((f) => (
+                <TableRow key={f.id}>
+                  <TableCell className="font-medium">{f.id}</TableCell>
+                  <TableCell>{f.cliente_nombre}</TableCell>
+                  <TableCell>{f.habitacion_tipo}</TableCell>
+                  <TableCell>${f.cargo_habitacion.toFixed(2)}</TableCell>
+                  <TableCell>${f.consumos_total.toFixed(2)}</TableCell>
+                  <TableCell className="font-bold">${f.total.toFixed(2)}</TableCell>
+                  <TableCell>
+                    {f.estado === "pendiente" ? (
+                      <Badge variant="warning">Pendiente</Badge>
+                    ) : f.estado === "pagada" ? (
+                      <Badge variant="success">Pagada</Badge>
+                    ) : (
+                      <Badge variant="secondary">Anulada</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-500">
+                    {new Date(f.fecha_emision).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          const factura = await facturasAPI.get(f.id)
+                          const cs = await consumosAPI.list(f.reserva_id)
+                          setFacturaActual(factura)
+                          setFacturaConsumos(cs)
+                          setFacturaDialogOpen(true)
+                        } catch {
+                          addToast("Error al cargar factura", "error")
+                        }
+                      }}
+                    >
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       )}
 
       {/* ============= CREATE RESERVA DIALOG ============= */}
@@ -877,28 +1022,29 @@ function Reservas() {
               {checkoutReserva?.cliente_nombre} — {checkoutReserva?.habitacion_tipo}
             </DialogDescription>
           </DialogHeader>
-          {checkoutConsumos.length > 0 && (
-            <div className="px-6 pb-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Consumos registrados</h3>
-              <div className="space-y-2">
+          <div className="px-6 pb-6 space-y-3">
+            <div className="flex justify-between py-2 border-b">
+              <span className="text-gray-500">Cargo por habitación ({checkoutNoches} noche{checkoutNoches !== 1 ? "s" : ""})</span>
+              <span className="font-medium">${checkoutCargoHabitacion.toFixed(2)}</span>
+            </div>
+            {checkoutConsumos.length > 0 ? (
+              <>
+                <h3 className="text-sm font-medium text-gray-700 mt-3 mb-2">Consumos registrados</h3>
                 {checkoutConsumos.map((c) => (
                   <div key={c.id} className="flex justify-between text-sm">
                     <span>{c.descripcion}</span>
                     <span className="font-medium">${c.monto.toFixed(2)}</span>
                   </div>
                 ))}
-              </div>
-              <div className="border-t mt-3 pt-3 flex justify-between font-semibold">
-                <span>Total consumos</span>
-                <span>${checkoutConsumos.reduce((s, c) => s + c.monto, 0).toFixed(2)}</span>
-              </div>
-            </div>
-          )}
-          {checkoutConsumos.length === 0 && (
-            <div className="px-6 pb-6">
+              </>
+            ) : (
               <p className="text-sm text-gray-400">Sin consumos registrados</p>
+            )}
+            <div className="border-t pt-3 flex justify-between text-lg font-bold">
+              <span>Total</span>
+              <span>${(checkoutCargoHabitacion + checkoutConsumos.reduce((s, c) => s + c.monto, 0)).toFixed(2)}</span>
             </div>
-          )}
+          </div>
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">Cancelar</Button>
@@ -906,6 +1052,109 @@ function Reservas() {
             <Button onClick={handleCheckOut}>
               <LogOut className="mr-1.5 h-4 w-4" /> Confirmar Check-Out
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============= INACTIVAR DIALOG ============= */}
+      <Dialog open={inactivarDialogOpen} onOpenChange={setInactivarDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Marcar como Inactivo</DialogTitle>
+            <DialogDescription>
+              {inactivarReserva?.cliente_nombre} — {inactivarReserva?.habitacion_tipo}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-6 pb-6">
+            <p className="text-sm text-gray-600">
+              El huésped no se presentó. Se generará una factura por el total de la estancia
+              y la habitación quedará disponible.
+            </p>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button variant="destructive" onClick={handleInactivar}>
+              Confirmar Inactivación
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============= FACTURA DIALOG ============= */}
+      <Dialog open={facturaDialogOpen} onOpenChange={setFacturaDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Factura #{facturaActual?.id}</DialogTitle>
+            <DialogDescription>
+              {facturaActual?.estado === "pendiente" ? (
+                <Badge variant="warning">Pendiente</Badge>
+              ) : facturaActual?.estado === "pagada" ? (
+                <Badge variant="success">Pagada</Badge>
+              ) : (
+                <Badge variant="secondary">Anulada</Badge>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          {facturaActual && (
+            <div className="px-6 pb-6 space-y-3">
+              <div className="flex justify-between py-2 border-b text-sm">
+                <span className="text-gray-500">Fecha de emisión</span>
+                <span>{new Date(facturaActual.fecha_emision).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b text-sm">
+                <span className="text-gray-500">Reserva ID</span>
+                <span>#{facturaActual.reserva_id}</span>
+              </div>
+              <div className="border-t pt-3 mt-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Detalle de cargos</h3>
+                <div className="flex justify-between py-2 text-sm">
+                  <span>Cargo por habitación</span>
+                  <span className="font-medium">${facturaActual.cargo_habitacion.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between py-2 text-sm">
+                  <span>Consumos extras</span>
+                  <span className="font-medium">${facturaActual.consumos_total.toFixed(2)}</span>
+                </div>
+                {facturaConsumos.length > 0 && (
+                  <div className="ml-4 space-y-1 mt-1 mb-2">
+                    {facturaConsumos.map((c) => (
+                      <div key={c.id} className="flex justify-between text-xs text-gray-500">
+                        <span>{c.descripcion}</span>
+                        <span>${c.monto.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex justify-between py-3 border-t mt-2 text-base font-bold">
+                  <span>Total</span>
+                  <span>${facturaActual.total.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            {facturaActual?.estado === "pendiente" && (
+              <Button
+                className="mr-auto"
+                onClick={async () => {
+                  try {
+                    const updated = await facturasAPI.update(facturaActual.id, { estado: "pagada" })
+                    setFacturaActual(updated)
+                    loadFacturas()
+                    addToast("Factura marcada como pagada", "success")
+                  } catch {
+                    addToast("Error al actualizar factura", "error")
+                  }
+                }}
+              >
+                Marcar Pagada
+              </Button>
+            )}
+            <DialogClose asChild>
+              <Button variant="outline">Cerrar</Button>
+            </DialogClose>
           </DialogFooter>
         </DialogContent>
       </Dialog>
