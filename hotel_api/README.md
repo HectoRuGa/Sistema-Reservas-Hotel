@@ -33,6 +33,7 @@ hotel_api/
 │       └── habitaciones.py
 │
 ├── requirements.txt
+├── diccionario_datos.md
 ├── .env
 └── README.md
 
@@ -71,6 +72,11 @@ Abrir en navegador:
 
 
 http://127.0.0.1:8000/docs
+
+
+## Documentación de la Base de Datos
+
+Para consultar el diccionario de datos que describe la estructura de las tablas, columnas y relaciones de la base de datos, revisa el archivo [diccionario_datos.md](diccionario_datos.md).
 
 
 ## Endpoints principales
