@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database.connection import SessionLocal
 from app.models.habitacion import Habitacion
@@ -34,3 +34,12 @@ def editar_habitacion(id: int, habitacion: HabitacionCreate, db: Session = Depen
         db.commit()
         db.refresh(db_habitacion)
     return db_habitacion
+
+@router.delete("/{id}")
+def eliminar_habitacion(id: int, db: Session = Depends(get_db)):
+    db_habitacion = db.query(Habitacion).filter(Habitacion.id == id).first()
+    if not db_habitacion:
+        raise HTTPException(status_code=404, detail="Habitación no encontrada")
+    db.delete(db_habitacion)
+    db.commit()
+    return {"ok": True}

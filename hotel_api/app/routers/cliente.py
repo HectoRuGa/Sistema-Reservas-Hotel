@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database.connection import SessionLocal
 from app.models.cliente import Cliente
@@ -34,3 +34,12 @@ def editar_cliente(id: int, cliente: ClienteCreate, db: Session = Depends(get_db
         db.commit()
         db.refresh(db_cliente)
     return db_cliente
+
+@router.delete("/{id}")
+def eliminar_cliente(id: int, db: Session = Depends(get_db)):
+    db_cliente = db.query(Cliente).filter(Cliente.id == id).first()
+    if not db_cliente:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    db.delete(db_cliente)
+    db.commit()
+    return {"ok": True}

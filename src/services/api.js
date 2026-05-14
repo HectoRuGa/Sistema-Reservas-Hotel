@@ -9,7 +9,8 @@ async function fetchAPI(endpoint, options = {}) {
     },
   })
   if (!response.ok) {
-    throw new Error(`Error: ${response.status} ${response.statusText}`)
+    const error = await response.text().catch(() => "")
+    throw new Error(`Error: ${response.status} ${response.statusText} ${error}`)
   }
   return response.json()
 }
@@ -52,6 +53,7 @@ export const clientesAPI = {
 
 export const reservasAPI = {
   getAll: () => fetchAPI("/reservas/"),
+  get: (id) => fetchAPI(`/reservas/${id}`),
   create: (data) =>
     fetchAPI("/reservas/", {
       method: "POST",
@@ -64,6 +66,29 @@ export const reservasAPI = {
     }),
   delete: (id) =>
     fetchAPI(`/reservas/${id}`, {
+      method: "DELETE",
+    }),
+  checkIn: (id) =>
+    fetchAPI(`/reservas/${id}/check-in`, {
+      method: "POST",
+    }),
+  checkOut: (id) =>
+    fetchAPI(`/reservas/${id}/check-out`, {
+      method: "POST",
+    }),
+  buscarDisponibilidad: (fecha_entrada, fecha_salida) =>
+    fetchAPI(`/reservas/disponibilidad?fecha_entrada=${fecha_entrada}&fecha_salida=${fecha_salida}`),
+}
+
+export const consumosAPI = {
+  list: (reservaId) => fetchAPI(`/reservas/${reservaId}/consumos`),
+  create: (reservaId, data) =>
+    fetchAPI(`/reservas/${reservaId}/consumos`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  delete: (reservaId, consumoId) =>
+    fetchAPI(`/reservas/${reservaId}/consumos/${consumoId}`, {
       method: "DELETE",
     }),
 }
